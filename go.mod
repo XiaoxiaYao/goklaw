@@ -1,1 +1,3 @@
-module "goklaw"
+module goklaw
+
+go 1.15
