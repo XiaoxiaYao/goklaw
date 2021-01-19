@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -11,16 +12,17 @@ type ConcurrentEngine struct {
 
 type Scheduler interface {
 	Submit(Request)
-	ConfigureMasterWorkerChan(chan Request)
+	//ConfigureMasterWorkerChan(chan Request)
+	WorkerReady(chan Request)
+	Run()
 }
 
 func (ce *ConcurrentEngine) Run(seeds ...Request) {
-	in := make(chan Request)
 	out := make(chan ParseResult)
-	ce.Scheduler.ConfigureMasterWorkerChan(in)
+	ce.Scheduler.Run()
 
 	for i := 0; i < ce.WorkerCount; i++ {
-		createWorker(in, out)
+		createWorker(out, ce.Scheduler)
 	}
 
 	for _, r := range seeds {
@@ -41,11 +43,14 @@ func (ce *ConcurrentEngine) Run(seeds ...Request) {
 	}
 }
 
-func createWorker(in chan Request, out chan ParseResult) {
+func createWorker(out chan ParseResult, s Scheduler) {
+	in := make(chan Request)
 	go func() {
 		for {
+			s.WorkerReady(in)
 			request := <-in
 			result, err := worker(request)
+			fmt.Println(len(in))
 			if err != nil {
 				continue
 			}
