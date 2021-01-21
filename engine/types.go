@@ -10,6 +10,7 @@ type ParseResult struct {
 	Items    []interface{}
 }
 
+// This is doing nothing
 func NilParser([]byte) ParseResult {
 	return ParseResult{}
 }
