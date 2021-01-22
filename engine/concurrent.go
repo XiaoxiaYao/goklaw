@@ -2,12 +2,12 @@ package engine
 
 import (
 	"fmt"
-	"log"
 )
 
 type ConcurrentEngine struct {
 	Scheduler   Scheduler
 	WorkerCount int
+	ItemChan    chan interface{}
 }
 
 type Scheduler interface {
@@ -33,12 +33,10 @@ func (ce *ConcurrentEngine) Run(seeds ...Request) {
 		ce.Scheduler.Submit(r)
 	}
 
-	itemCount := 0
 	for {
 		result := <-out
 		for _, item := range result.Items {
-			log.Printf("Got item: #%d: %v", itemCount, item)
-			itemCount++
+			go func() { ce.ItemChan <- item }()
 		}
 
 		for _, request := range result.Requests {
